@@ -251,7 +251,7 @@ function replayResults(results) {
         // Have we got some requests to fire?
         if ( typeof requestSet[runOffset] != 'undefined' ) {
             var first = requestSet[runOffset][0];
-            console.log('['+new Date(first.date)+'] '+requestSet[runOffset].length+' Requests' );
+            console.log('['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from client.' );
 
             // Send all requests that occurred in this second according to logfile
 

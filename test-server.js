@@ -6,6 +6,9 @@ const port = 8000;
 
 var express = require('express');
 var app = express();
+var secondsCnt = 0;
+var outCnt = 0;
+var bReplay = false;
 
 var randomQueue = [];
 
@@ -24,20 +27,20 @@ function pushIntoQueue(item) {
 }
 
 var heart_beat = function() {
-    if( randomQueue.legnth < 1 ) return;
+    //if( randomQueue.length < 1 ) return;
     Object.keys(randomQueue).forEach(function(key) {
         if( Date.now() < key ) return;
         else {
             var item = randomQueue[key];
-
             item.res.send('Hello!');
-
+            outCnt ++;
             delete randomQueue[key];
         }
     });
 };
 
 app.get('/*', function (req, res) {
+    bReplay = true;
     pushIntoQueue({'req':req, 'res':res});
 });
 
@@ -46,6 +49,16 @@ app.listen(port, '127.0.0.1', function () {
 });
 
 setInterval(heart_beat, 100);
+
+setInterval(function() {
+    if( bReplay ) {
+        secondsCnt++;
+        if( outCnt > 0 ) {
+            console.log("\tExpress: %d responses sent at %d seconds by server.", outCnt, secondsCnt);
+            outCnt = 0;
+        }
+    }
+}, 1000);
 
 console.log('Server heart_beat has been started.');
 
