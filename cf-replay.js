@@ -10,30 +10,38 @@ var reader = require('cloudfront-log-reader');
 var s3scan = require('s3scan');
 var keepalive = require('agentkeepalive');
 var split = require('split');
+var konphyg = require('konphyg')(__dirname + '/config');
 var _ = require('underscore');
 
-var agent = new keepalive.HttpsAgent({
-    keepAlive: true,
-    maxSockets: Math.ceil(require('os').cpus().length * 16),
-    keepAliveTimeout: 60000
-});
-
-var startDate, endDate;
-
-if( process.argv.length < 4 ) {
-    console.log('\n\tSyntax: node.exe cf-replay.js [jsonDate Start] [jsonDate End]\n');
-    JSONDateHelp();
+if ( process.argv.length < 3 ) {
+    console.log('Syntax: node cf-replay.js <config-key>');
     process.exit(1);
 }
-else {
-    process.argv.forEach(function(v, i, arr) {
-        switch (i) {
-            case 2: startDate = new Date(v); break;
-            case 3: endDate = new Date(v); break;
-            default: break;
-        }
-    });
+
+try {
+    var config = konphyg(process.argv[2]);
+
+    if (!config.bucketName) throw "Invalid config file: missing Amazon S3 'bucketName'";
+    if (!config.bucketPath) throw "Invalid config file: missing Amazon S3 'bucketPath' (if there is no sub-folder(s), just put an empty string value)";
+
+    if( !config.startTime )throw "Invalid config file: missing 'startTime' (use JSONDate format)'";
+    if( !config.endTime )throw "Invalid config file: missing 'endTime' (use JSONDate format)'";
+
+    if (!config.speedupFactor) throw "Invalid config file: missing 'speedupFactor'";
+    if (!config.target) throw "Invalid config file: missing 'target'";
+    else {
+        if (!config.target.host) throw "Invalid config file: missing 'target.host'";
+        if (!config.target.port) throw "Invalid config file: missing 'target.port'";
+    }
+
+} catch (e) {
+    console.log('\t' + e + '\n');
+    console.log('\tSyntax: node cf-replay.js <config-key>');
+    process.exit(1);
 }
+
+var startDate = new Date(config.startTime),
+    endDate = new Date(config.endTime);
 
 if( startDate.toJSON() == null || endDate.toJSON() == null ) {
     console.log("\n\tNull date detected, is your jsonDate formatting correct?\n");
@@ -47,6 +55,12 @@ else if( startDate > endDate ) {
 
 console.log("Start Date: %s", startDate.toJSON());
 console.log("End Date..: %s", endDate.toJSON());
+
+var agent = new keepalive.HttpsAgent({
+    keepAlive: true,
+    maxSockets: Math.ceil(require('os').cpus().length * 16),
+    keepAliveTimeout: 60000
+});
 
 function listFiles(uri, callback) {
     found = [];
@@ -151,7 +165,7 @@ function processResults(keys) {
     keys.forEach(function(key) {
         console.log("Processing: %s", key);
         totalStreams++;
-        reader.LogStream('s3://tdtile-logsamples/' + key)
+        reader.LogStream('s3://' + config.bucketName + '/' + key)
             .pipe(split())
             .on('data', function(data) {
                 var parts = data.split(/\s+/g);
@@ -184,6 +198,8 @@ function processResults(keys) {
     });
 }
 
+var http = require('http');
+
 function replayResults(results) {
     var dtStart = Date.now();
     var dtDuration = 0;
@@ -213,10 +229,63 @@ function replayResults(results) {
         requestSet[offset].push(data);
     }
 
-    console.log('requestSet array contains %d parts', requestSet.length);
+    console.log('\nrequestSet array contains %d parts', requestSet.length);
+
+    console.log("Executing...\n\n");
+
+    var timings = [];
+    var reqSeq = 0;
+    var execStart = Date.now();
+
+    var interval = setInterval(function() {
+
+        // Determine how much time has passed
+        var runOffsetMS = (Date.now() - execStart);
+        var runOffset = Math.round(runOffsetMS / 1000);
+
+        // Is the test over yet?
+        if ( runOffset > dtDuration ) {
+            clearInterval(interval);
+        }
+
+        // Have we got some requests to fire?
+        if ( typeof requestSet[runOffset] != 'undefined' ) {
+            var first = requestSet[runOffset][0];
+            console.log('['+new Date(first.date)+'] '+requestSet[runOffset].length+' Requests' );
+
+            // Send all requests that occurred in this second according to logfile
+
+            requestSet[runOffset].forEach(function(item){
+                var reqNum = reqSeq ++;
+
+                var req = http.request({
+                        host: config.target.host,
+                        port: config.target.port,
+                        path: item["uri-stem"],
+                        method: item.method,
+                        reqStart: new Date().getTime(),
+                        agent: false
+                    },
+                    function(resp) {}
+                    )
+                    .on('socket', function() { timings[reqNum] = new Date().getTime(); })
+                    .on('response', function(resp) {
+                        var diff = (new Date().getTime()) - timings[reqNum];
+                        console.log(' - #' + reqNum + ' [DT=' + diff + 'ms, R=' + resp.statusCode + ']'); }
+                    );
+
+                req.end();
+            });
+
+            // Discard the request info so we don't process it again
+            delete requestSet[runOffset];
+        }
+
+    }, 100);
+
 }
 
-listFiles('s3://tdtile-logsamples/log-samples', filterFileListByDate);
+listFiles('s3://' + config.bucketName + '/' + config.bucketPath, filterFileListByDate);
 
 function JSONDateHelp() {
     console.log('\t-----');

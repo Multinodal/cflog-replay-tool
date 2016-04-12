@@ -1,0 +1,11 @@
+{
+  "bucketName": "tdtile-logsamples",
+  "bucketPath": "log-samples",
+  "speedupFactor": "1",
+  "startTime": "2016-03-01T00:00:00.000Z",
+  "endTime" : "2016-03-01T00:05:00.000Z",
+  "target": {
+    "host": "www.yahoo.com",
+    "port": "80"
+  }
+}
