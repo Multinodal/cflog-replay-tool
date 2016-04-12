@@ -80,7 +80,7 @@ function cloudFrontFileDate(filename) {
         throw ("cloudFrontFileDate function expects a filename separated by a 4 dots.\nGot: " + filename);
     }
     else {
-        dparts = parts[1].split('-');
+        var dparts = parts[1].split('-');
 
         if( dparts.length < 4 ) {
             throw ("cloudFrontFileDate function expects part[1] to be YYYY-MM-DD-HH.\nGot: " + parts[1]);
@@ -99,8 +99,9 @@ function filterFileListByDate(found) {
         e = new Date(endDate.toJSON()),
         files = [];
 
-    // manipulate startDate and endDate to cover entire hour, as the filename only contains hour
+    console.log('-------');
 
+    // manipulate startDate and endDate to cover entire hour, as the filename only contains hour
     s.setUTCMinutes(0, 0, 0);
     e.setUTCMinutes(59, 59, 999);
 
@@ -143,41 +144,76 @@ function createLogObject(date, parts) {
 // See: http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
 
 function processResults(keys) {
-    results = [];
+    var results = [];
+    var totalRecords = 0, totalStreams = 0;
 
+    console.log('');
     keys.forEach(function(key) {
         console.log("Processing: %s", key);
-
+        totalStreams++;
         reader.LogStream('s3://tdtile-logsamples/' + key)
             .pipe(split())
             .on('data', function(data) {
-                var parts = data.split('\t');
+                var parts = data.split(/\s+/g);
                 delete data;
-
                 if( parts.length < 23 ) {
                     delete parts;
                     return;
                 }
-
                 var jsonDate = parts[0] + "T" + parts[1] + ".000Z";
                 var d = new Date(jsonDate);
-
                 if( d.toJSON() == null ) return;
                 else if(d >= startDate && d <= endDate) {
                     results.push(createLogObject(d, parts));
                 }
-                //console.log("%s %s %d", parts[0], parts[1], parts.length);
                 delete parts;
+            })
+            .on('error', function(err) {
+                console.log(JSON.stringify(err));
+                totalStreams--;
             })
             .on('end', function() {
                 console.log("Finished processing %s...", key);
-
-                if( results.length > 0 ) {
-                    //console.log(JSON.stringify(results[0], 0, 2));
+                totalRecords += results.length;
+                if( totalStreams ) totalStreams--;
+                if( !totalStreams ) {
+                    console.log("\nCompleted reading all s3 streams, total of %d logs fit date-time span supplied.", totalRecords);
+                    replayResults(results);
                 }
-
             });
     });
+}
+
+function replayResults(results) {
+    var dtStart = Date.now();
+    var dtDuration = 0;
+
+    results = _.sortBy(results, 'date');
+
+    if( results.length < 1 ) return;
+
+    dtStart = results[0].date;
+
+    console.log('Calculating execution order and offset...');
+
+    var requestSet = [];
+
+    for(x = 0; x < results.length; x++) {
+        var data = results[x];
+
+        // Calculate # of seconds past start we should fire request
+        var offset = Math.round((data.date - dtStart) / 1000);
+
+        if (offset > dtDuration) dtDuration = offset;
+
+        if ( typeof requestSet[offset] == 'undefined' ) {
+            requestSet[offset] = [];
+        }
+
+        requestSet[offset].push(data);
+    }
+
+    console.log('requestSet array contains %d parts', requestSet.length);
 }
 
 listFiles('s3://tdtile-logsamples/log-samples', filterFileListByDate);
