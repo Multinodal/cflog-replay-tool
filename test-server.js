@@ -54,7 +54,7 @@ setInterval(function() {
     if( bReplay ) {
         secondsCnt++;
         if( outCnt > 0 ) {
-            console.log("\tExpress: %d responses sent at %d seconds by server.", outCnt, secondsCnt);
+            console.log("\n\t\tExpress: %d responses sent at %d seconds by server.\n", outCnt, secondsCnt);
             outCnt = 0;
         }
     }

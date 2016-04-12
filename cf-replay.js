@@ -200,6 +200,12 @@ function processResults(keys) {
 
 var http = require('http');
 
+var totalRequests = 0,
+    totalResponses = 0,
+    totalErrors = 0;
+
+var interval = null;
+
 function replayResults(results) {
     var dtStart = Date.now();
     var dtDuration = 0;
@@ -226,6 +232,7 @@ function replayResults(results) {
             requestSet[offset] = [];
         }
 
+        totalRequests ++;
         requestSet[offset].push(data);
     }
 
@@ -237,21 +244,16 @@ function replayResults(results) {
     var reqSeq = 0;
     var execStart = Date.now();
 
-    var interval = setInterval(function() {
+    interval = setInterval(function() {
 
         // Determine how much time has passed
         var runOffsetMS = (Date.now() - execStart);
         var runOffset = Math.round(runOffsetMS / 1000);
 
-        // Is the test over yet?
-        if ( runOffset > dtDuration ) {
-            clearInterval(interval);
-        }
-
         // Have we got some requests to fire?
         if ( typeof requestSet[runOffset] != 'undefined' ) {
             var first = requestSet[runOffset][0];
-            console.log('['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from client.' );
+            console.log('\n* ['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from replay tool.' );
 
             // Send all requests that occurred in this second according to logfile
 
@@ -268,11 +270,23 @@ function replayResults(results) {
                     },
                     function(resp) {}
                     )
-                    .on('socket', function() { timings[reqNum] = new Date().getTime(); })
+                    .on('error', function(err) {
+                        var diff = (new Date().getTime()) - timings[reqNum];
+                        console.log('ERROR ON - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms]');
+                        console.log("ERROR   : " + err);
+                        totalErrors++;
+                        totalResponses++;
+                        areWeDoneYet();
+                    })
+                    .on('socket', function() {
+                        timings[reqNum] = new Date().getTime();
+                    })
                     .on('response', function(resp) {
                         var diff = (new Date().getTime()) - timings[reqNum];
-                        console.log(' - #' + reqNum + ' [DT=' + diff + 'ms, R=' + resp.statusCode + ']'); }
-                    );
+                        console.log(' - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
+                        totalResponses++;
+                        areWeDoneYet();
+                    });
 
                 req.end();
             });
@@ -284,6 +298,16 @@ function replayResults(results) {
     }, 100);
 
 }
+
+function areWeDoneYet() {
+    if (totalResponses >= totalRequests) {
+        clearInterval(interval);
+        console.log("\n\t\t<write out JSON record set of all responses here>");
+        console.log("\nTotals :  requests (%d), responses (%d), http errors (%d)", totalRequests, totalResponses, totalErrors);
+        //process.exit(1);
+    }
+}
+
 
 listFiles('s3://' + config.bucketName + '/' + config.bucketPath, filterFileListByDate);
 
