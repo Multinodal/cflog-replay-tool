@@ -207,6 +207,8 @@ var totalRequests = 0,
 
 var interval = null;
 
+var statSet = [];
+
 function replayResults(results) {
     var dtStart = Date.now();
     var dtDuration = 0;
@@ -254,12 +256,29 @@ function replayResults(results) {
         // Have we got some requests to fire?
         if ( typeof requestSet[runOffset] != 'undefined' ) {
             var first = requestSet[runOffset][0];
+
+            statSet[runOffset] = {
+                'runOffset' : runOffset,
+                'requestSent' : 0,
+                'averageTime': 0,
+                'responseReceived' : [],
+                'timeouts' : 0
+            };
+            
             console.log('\n* ['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from replay tool.\n' );
 
             // Send all requests that occurred in this second according to logfile
 
             requestSet[runOffset].forEach(function(item){
                 var reqNum = reqSeq ++;
+
+                statSet[runOffset] = {
+                    'runOffset' : runOffset,
+                    'requestSent' : 0,
+                    'averageTime': 0,
+                    'responseReceived' : [],
+                    'timeouts' : 0
+                };
 
                 var req = http.request({
                         host: config.target.host,
@@ -275,19 +294,23 @@ function replayResults(results) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         console.log('ERROR ON - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms]');
                         console.log(err);
+
                         totalErrors++;
-                        totalResponses++;
-                        areWeDoneYet();
+                        incrementTotals(0);
+                        updateStats(runOffset, 0, true, 0);
+
+                        exitIfDone();
                     })
                     .on('socket', function() {
                         timings[reqNum] = new Date().getTime();
                     })
                     .on('response', function(resp) {
                         var diff = (new Date().getTime()) - timings[reqNum];
-                        totalMilliseconds += diff;
+                        incrementTotals(diff);
+                        updateStats(runOffset, diff, false, resp.statusCode);
                         console.log(' - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
-                        totalResponses++;
-                        areWeDoneYet();
+
+                        exitIfDone();
                     });
 
                 req.end();
@@ -301,7 +324,27 @@ function replayResults(results) {
 
 }
 
-function areWeDoneYet() {
+function incrementTotals(diff) {
+    totalMilliseconds += diff;
+    totalResponses++;
+}
+
+function updateStats(runOffset, timeTaken, timeout, status) {
+    var s = statSet[runOffset];
+
+    s.requestSent++;
+
+    if( timeout ) s.timeouts ++;
+
+    if( timeTaken > 0)
+        s.averageTime = (s.averageTime + timeTaken) / (s.requestSent - s.timeouts);
+
+    if( _.indexOf(s.responseReceived, status) == -1 )
+        s.responseReceived.push(status);
+
+}
+
+function exitIfDone() {
     if (totalResponses >= totalRequests) {
         var average = totalMilliseconds / (totalResponses - totalErrors);
 
@@ -311,6 +354,19 @@ function areWeDoneYet() {
 
         console.log("\nTotals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.",
             totalRequests, totalResponses, totalErrors, average.toFixed(2));
+
+        statSet = _.sortBy(statSet, 'runOffset');
+
+        var keys = Object.keys(statSet);
+
+        keys.forEach(function(key) {
+            var s = statSet[key];
+
+            if( typeof s == "undefined") return;
+
+            console.log('second #%d: %d requests - average time: %d, timeouts: %d, responses received: %s',
+                key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived));
+        });
     }
 }
 
