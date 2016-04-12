@@ -5,7 +5,7 @@
   "startTime": "2016-03-01T00:00:00.000Z",
   "endTime" : "2016-03-01T00:05:00.000Z",
   "target": {
-    "host": "www.yahoo.com",
-    "port": "80"
+    "host": "127.0.0.1",
+    "port": "8000"
   }
 }

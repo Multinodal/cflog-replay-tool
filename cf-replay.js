@@ -218,7 +218,7 @@ function replayResults(results) {
         var data = results[x];
 
         // Calculate # of seconds past start we should fire request
-        var offset = Math.round((data.date - dtStart) / 1000);
+        var offset = Math.round(((data.date - dtStart) / 1000)  / config.speedupFactor);
 
         if (offset > dtDuration) dtDuration = offset;
 
