@@ -29,6 +29,7 @@ var heart_beat = function() {
         if( Date.now() < key ) return;
         else {
             var item = randomQueue[key];
+
             item.res.send('Hello!');
 
             delete randomQueue[key];
@@ -44,7 +45,7 @@ app.listen(port, '127.0.0.1', function () {
     console.log('Test-server listening on port %d!', port);
 });
 
-i = setInterval(heart_beat, 100);
+setInterval(heart_beat, 100);
 
 console.log('Server heart_beat has been started.');
 
