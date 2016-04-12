@@ -202,7 +202,8 @@ var http = require('http');
 
 var totalRequests = 0,
     totalResponses = 0,
-    totalErrors = 0;
+    totalErrors = 0,
+    totalMilliseconds = 0;
 
 var interval = null;
 
@@ -253,7 +254,7 @@ function replayResults(results) {
         // Have we got some requests to fire?
         if ( typeof requestSet[runOffset] != 'undefined' ) {
             var first = requestSet[runOffset][0];
-            console.log('\n* ['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from replay tool.' );
+            console.log('\n* ['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from replay tool.\n' );
 
             // Send all requests that occurred in this second according to logfile
 
@@ -273,7 +274,7 @@ function replayResults(results) {
                     .on('error', function(err) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         console.log('ERROR ON - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms]');
-                        console.log("ERROR   : " + err);
+                        console.log(err);
                         totalErrors++;
                         totalResponses++;
                         areWeDoneYet();
@@ -283,6 +284,7 @@ function replayResults(results) {
                     })
                     .on('response', function(resp) {
                         var diff = (new Date().getTime()) - timings[reqNum];
+                        totalMilliseconds += diff;
                         console.log(' - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
                         totalResponses++;
                         areWeDoneYet();
@@ -301,18 +303,23 @@ function replayResults(results) {
 
 function areWeDoneYet() {
     if (totalResponses >= totalRequests) {
+        var average = totalMilliseconds / (totalResponses - totalErrors);
+
         clearInterval(interval);
-        console.log("\n\t\t<write out JSON record set of all responses here>");
-        console.log("\nTotals :  requests (%d), responses (%d), http errors (%d)", totalRequests, totalResponses, totalErrors);
-        //process.exit(1);
+
+        console.log("\n\t\t<write out JSON record set of all responses to a file?>\n");
+
+        console.log("\nTotals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.",
+            totalRequests, totalResponses, totalErrors, average.toFixed(2));
     }
 }
-
-
-listFiles('s3://' + config.bucketName + '/' + config.bucketPath, filterFileListByDate);
 
 function JSONDateHelp() {
     console.log('\t-----');
     console.log("\tjsonDate format example : 2016-03-01T08:15:00.123Z\n");
     console.log("\tReference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toJSON\n");
 }
+
+
+// start everything off here...
+listFiles('s3://' + config.bucketName + '/' + config.bucketPath, filterFileListByDate);

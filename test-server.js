@@ -17,7 +17,7 @@ function getRandomBetween(min, max) {
 }
 
 function pushIntoQueue(item) {
-    var d = new Date(Date.now() + getRandomBetween(350, 3500));
+    var d = new Date(Date.now() + getRandomBetween(150, 2500));
     var key = d.getTime();
 
     if( typeof randomQueue[key] == "undefined" )
