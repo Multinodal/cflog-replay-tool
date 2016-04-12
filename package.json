@@ -9,10 +9,11 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "agentkeepalive": "^2.0.3",
+    "cloudfront-log-reader": "^2.1.0",
+    "express": "^4.13.4",
+    "konphyg": "^1.4.0",
     "s3scan": "0.1.x",
     "split": "1.0.x",
-    "cloudfront-log-reader": "^2.1.0",
-    "konphyg": "^1.4.0",
     "underscore": "^1.8.3"
   },
   "devDependencies": {},
