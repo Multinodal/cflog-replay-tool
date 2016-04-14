@@ -109,7 +109,6 @@ function filterFileListByDate(found) {
     var files = [];
 
     console.log('-------');
-
     found.forEach(function(key) {
         try {
             var d = cloudFrontFileDate(key);

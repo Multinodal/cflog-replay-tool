@@ -3,7 +3,6 @@
 // lawrence@multinodal.com
 
 const port = 8000;
-
 var express = require('express');
 var app = express();
 var secondsCnt = 0, outCnt = 0, totalSent = 0;
