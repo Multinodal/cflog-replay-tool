@@ -1,8 +1,8 @@
 // quick and dirty test server to test cf-replay requests and
 // then respond to the request after a random amount of time
-// lawrence@multinodal.com
 
 const port = 8000;
+
 var express = require('express');
 var app = express();
 var secondsCnt = 0, outCnt = 0, totalSent = 0;
