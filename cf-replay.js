@@ -55,14 +55,14 @@ else if( startDate > endDate ) {
 console.log("Start Date: %s", startDate.toJSON());
 console.log("End Date..: %s", endDate.toJSON());
 
-var agent = new keepalive.HttpsAgent({
-    keepAlive: true,
-    maxSockets: Math.ceil(require('os').cpus().length * 16),
-    keepAliveTimeout: 60000
-});
-
 function listFiles(uri, callback) {
-    found = [];
+    var found = [];
+
+    var agent = new keepalive.HttpsAgent({
+        keepAlive: true,
+        keepAliveTimeout: 60000
+    });
+
     s3scan.List(uri, {agent: agent})
         .on('error', function errorFunction(err) {
             console.log('Error retrieving S3 bucket list: %s', JSON.stringify(err));
@@ -93,15 +93,12 @@ function cloudFrontFileDate(filename) {
     }
     else {
         var dparts = parts[1].split('-');
-
         if( dparts.length < 4 ) {
             throw ("cloudFrontFileDate function expects part[1] to be YYYY-MM-DD-HH.\nGot: " + parts[1]);
         }
         else {
-            // create a jsonDate string
             var jsonDate = dparts[0] + '-' + dparts[1] + '-' + dparts[2] + "T" + dparts[3] + ":00:00.000Z";
             return new Date(jsonDate);
-            //return d;
         }
     }
 }
@@ -112,6 +109,7 @@ function filterFileListByDate(found) {
     var files = [];
 
     console.log('-------');
+
     found.forEach(function(key) {
         try {
             var d = cloudFrontFileDate(key);
@@ -334,21 +332,56 @@ function updateStats(runOffset, timeTaken, timeout, status) {
 
 }
 
+var fs = require('fs');
+var printf = require('util').format;
+
 function exitIfDone() {
     if (totalResponses >= totalRequests) {
         var average = totalMilliseconds / (totalResponses - totalErrors);
+        var log_file = (typeof(config.resultsFile) == "string" && config.resultsFile.length > 0);
+        var wstream = null;
+
         clearInterval(interval);
 
-        console.log("\nTotals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.",
-            totalRequests, totalResponses, totalErrors, average.toFixed(2));
+        if( log_file)  {
+            try {
+                wstream = fs.createWriteStream(config.resultsFile);
+                console.log('\n\t' + config.resultsFile + ' created for logging output.');
+            }
+            catch(err) {
+                console.trace(err);
+            }
+        }
+
+        var totals = printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
+                        totalRequests, totalResponses, totalErrors, average.toFixed(2));
+
+        if( log_file )
+            wstream.write(totals);
+        else
+            console.log('\n' + totals);
 
         statSet = _.sortBy(statSet, 'runOffset');
+
         Object.keys(statSet).forEach(function(key) {
             var s = statSet[key];
+
             if( typeof s == "undefined") return;
-            console.log('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
-                key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived));
+
+            var line =  printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+                            key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived));
+
+            if( log_file )
+                wstream.write(line + '\n');
+            else
+                console.log(line);
+
         });
+
+        if( log_file ) {
+            wstream.end();
+            console.log('\n\t' + config.resultsFile + ' closed.');
+        }
     }
 }
 

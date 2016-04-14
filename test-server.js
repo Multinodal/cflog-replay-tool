@@ -9,8 +9,6 @@ var app = express();
 var secondsCnt = 0, outCnt = 0, totalSent = 0;
 var bReplay = false;
 
-var randomQueue = [];
-
 function getRandomBetween(min, max) {
     return Math.random() * (max - min) + min;
 }
