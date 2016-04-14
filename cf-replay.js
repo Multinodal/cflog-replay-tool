@@ -21,19 +21,18 @@ if ( process.argv.length < 3 ) {
 try {
     var config = konphyg(process.argv[2]);
 
-    if (!config.bucketName) throw "Invalid config file: missing Amazon S3 'bucketName'";
-    if (!config.bucketPath) throw "Invalid config file: missing Amazon S3 'bucketPath' (if there is no sub-folder(s), just put an empty string value)";
-
-    if( !config.startTime )throw "Invalid config file: missing 'startTime' (use JSONDate format)'";
-    if( !config.endTime )throw "Invalid config file: missing 'endTime' (use JSONDate format)'";
-
-    if (!config.speedupFactor) throw "Invalid config file: missing 'speedupFactor'";
-    if (!config.target) throw "Invalid config file: missing 'target'";
+    if( !config.bucketName ) throw "Invalid config file: missing Amazon S3 'bucketName'";
+    if( !config.bucketPath ) throw "Invalid config file: missing Amazon S3 'bucketPath' (if there is no sub-folder(s), just put an empty string value)";
+    if( !config.requestTimeout ) throw "Invalid config file: missing 'requestTimeout' numeric value";
+    if( typeof config.keepAlive != "boolean" ) throw "Invalid config file: missing 'keepAlive' boolean value";
+    if( !config.startTime ) throw "Invalid config file: missing 'startTime' (use JSONDate format)'";
+    if( !config.endTime ) throw "Invalid config file: missing 'endTime' (use JSONDate format)'";
+    if( !config.speedupFactor) throw "Invalid config file: missing 'speedupFactor'";
+    if( !config.target ) throw "Invalid config file: missing 'target'";
     else {
-        if (!config.target.host) throw "Invalid config file: missing 'target.host'";
-        if (!config.target.port) throw "Invalid config file: missing 'target.port'";
+        if ( !config.target.host ) throw "Invalid config file: missing 'target.host'";
+        if ( !config.target.port ) throw "Invalid config file: missing 'target.port'";
     }
-
 } catch (e) {
     console.log('\t' + e + '\n');
     console.log('\tSyntax: node cf-replay.js <config-key>');
@@ -80,8 +79,7 @@ function listFiles(uri, callback) {
 }
 
 /*
-*  CloudFront Log File Name Format
-*
+*  CloudFront Log File Name Format:
 *  The name of each log file that CloudFront saves in your Amazon S3 bucket uses the following file name format:
 *  distribution-ID.YYYY-MM-DD-HH.unique-ID.gz
 */
@@ -102,27 +100,21 @@ function cloudFrontFileDate(filename) {
         else {
             // create a jsonDate string
             var jsonDate = dparts[0] + '-' + dparts[1] + '-' + dparts[2] + "T" + dparts[3] + ":00:00.000Z";
-            d = new Date(jsonDate);
-            return d;
+            return new Date(jsonDate);
+            //return d;
         }
     }
 }
 
 function filterFileListByDate(found) {
-    var s = new Date(startDate.toJSON()),
-        e = new Date(endDate.toJSON()),
-        files = [];
+    var s = new Date(startDate.toJSON()).setUTCMinutes(0, 0, 0);
+    var e = new Date(endDate.toJSON()).setUTCMinutes(59, 59, 999);
+    var files = [];
 
     console.log('-------');
-
-    // manipulate startDate and endDate to cover entire hour, as the filename only contains hour
-    s.setUTCMinutes(0, 0, 0);
-    e.setUTCMinutes(59, 59, 999);
-
     found.forEach(function(key) {
-        var d = null;
         try {
-            d = cloudFrontFileDate(key);
+            var d = cloudFrontFileDate(key);
             var b =  (d >= s && d <= e);
             console.log('File %s (%s)', key, (b ? "in range" : "skip this file"));
             if( b ) files.push(key);
@@ -200,6 +192,9 @@ function processResults(keys) {
 
 var http = require('http');
 
+http.globalAgent.keepAlive = config.keepAlive;
+http.globalAgent.keepAliveMsecs = config.requestTimeout;
+
 var totalRequests = 0,
     totalResponses = 0,
     totalErrors = 0,
@@ -264,7 +259,7 @@ function replayResults(results) {
                 'responseReceived' : [],
                 'timeouts' : 0
             };
-            
+
             console.log('\n* ['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from replay tool.\n' );
 
             // Send all requests that occurred in this second according to logfile
@@ -272,21 +267,12 @@ function replayResults(results) {
             requestSet[runOffset].forEach(function(item){
                 var reqNum = reqSeq ++;
 
-                statSet[runOffset] = {
-                    'runOffset' : runOffset,
-                    'requestSent' : 0,
-                    'averageTime': 0,
-                    'responseReceived' : [],
-                    'timeouts' : 0
-                };
-
                 var req = http.request({
                         host: config.target.host,
                         port: config.target.port,
                         path: item["uri-stem"],
                         method: item.method,
                         reqStart: new Date().getTime(),
-                        agent: false
                     },
                     function(resp) {}
                     )
@@ -301,7 +287,11 @@ function replayResults(results) {
 
                         exitIfDone();
                     })
-                    .on('socket', function() {
+                    .on('socket', function(socket) {
+                        socket.setTimeout(20 * 1000);
+                        socket.on('timeout', function() {
+                            req.abort();
+                        });
                         timings[reqNum] = new Date().getTime();
                     })
                     .on('response', function(resp) {
@@ -347,24 +337,16 @@ function updateStats(runOffset, timeTaken, timeout, status) {
 function exitIfDone() {
     if (totalResponses >= totalRequests) {
         var average = totalMilliseconds / (totalResponses - totalErrors);
-
         clearInterval(interval);
-
-        console.log("\n\t\t<write out JSON record set of all responses to a file?>\n");
 
         console.log("\nTotals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.",
             totalRequests, totalResponses, totalErrors, average.toFixed(2));
 
         statSet = _.sortBy(statSet, 'runOffset');
-
-        var keys = Object.keys(statSet);
-
-        keys.forEach(function(key) {
+        Object.keys(statSet).forEach(function(key) {
             var s = statSet[key];
-
             if( typeof s == "undefined") return;
-
-            console.log('second #%d: %d requests - average time: %d, timeouts: %d, responses received: %s',
+            console.log('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
                 key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived));
         });
     }

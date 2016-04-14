@@ -4,6 +4,8 @@
   "speedupFactor": "1",
   "startTime": "2016-03-01T00:00:00.000Z",
   "endTime" : "2016-03-01T00:01:00.000Z",
+  "requestTimeout" : 20000,
+  "keepAlive" : false,
   "target": {
     "host": "127.0.0.1",
     "port": "8000"
