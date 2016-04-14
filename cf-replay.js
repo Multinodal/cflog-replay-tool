@@ -168,6 +168,17 @@ function processResults(keys) {
                 var d = new Date(jsonDate);
                 if( d.toJSON() == null ) return;
                 else if(d >= startDate && d <= endDate) {
+
+                    var i = parts.length;
+
+                    while(i--) {
+                        var key = "RegExpPart" + (i + 1);
+                        if( typeof(config[key]) == "object" ) {
+                            var regexp = new RegExp(config[key].regexp, 'i');
+                            if( parts[i].match(regexp) == null ) return;
+                        }
+                    }
+
                     results.push(createLogObject(d, parts));
                 }
                 delete parts;

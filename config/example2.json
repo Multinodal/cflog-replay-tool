@@ -1,0 +1,15 @@
+{
+  "bucketName": "tdtile-logsamples",
+  "bucketPath": "log-samples",
+  "speedupFactor": "1",
+  "startTime": "2016-03-01T00:00:00.000Z",
+  "endTime" : "2016-03-01T00:01:00.000Z",
+  "requestTimeout" : 20000,
+  "keepAlive" : false,
+  "target": {
+    "host": "127.0.0.1",
+    "port": "8000"
+  },
+  "RegExpPart14" : { "regexp" : "^Miss" },
+  "resultsFile" : "example2_output.txt"
+}
