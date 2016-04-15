@@ -262,6 +262,7 @@ function replayResults(results) {
 
             statSet[runOffset] = {
                 'runOffset' : runOffset,
+                'totalSent' : 0,
                 'requestSent' : 0,
                 'averageTime': 0,
                 'responseReceived' : [],
@@ -331,15 +332,14 @@ function updateStats(runOffset, timeTaken, timeout, status) {
     var s = statSet[runOffset];
 
     s.requestSent++;
-
     if( timeout ) s.timeouts ++;
-
-    if( timeTaken > 0)
-        s.averageTime = (s.averageTime + timeTaken) / (s.requestSent - s.timeouts);
+    if( timeTaken > 0) {
+        s.totalSent += timeTaken;
+        s.averageTime = s.totalSent  / (s.requestSent - s.timeouts);
+    }
 
     if( _.indexOf(s.responseReceived, status) == -1 )
         s.responseReceived.push(status);
-
 }
 
 var fs = require('fs');
