@@ -11,5 +11,10 @@
     "port": "8000"
   },
   "RegExpPart14" : { "regexp" : "^Miss" },
-  "resultsFile" : "example2_output.txt"
+  "resultsFile" : "example2_results.csv",
+  "pathMappingFunction" : [
+    "   var p = path; ",
+    "   p += ''; ",
+    "   path = p; "
+  ]
 }

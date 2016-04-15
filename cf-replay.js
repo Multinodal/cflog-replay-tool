@@ -13,6 +13,8 @@ var split = require('split');
 var konphyg = require('konphyg')(__dirname + '/config');
 var _ = require('underscore');
 
+const vm = require('vm'); // for config.pathMappingFunction
+
 if ( process.argv.length < 3 ) {
     console.log('Syntax: node cf-replay.js <config-key>');
     process.exit(1);
@@ -28,6 +30,12 @@ try {
     if( !config.startTime ) throw "Invalid config file: missing 'startTime' (use JSONDate format)'";
     if( !config.endTime ) throw "Invalid config file: missing 'endTime' (use JSONDate format)'";
     if( !config.speedupFactor) throw "Invalid config file: missing 'speedupFactor'";
+    if( typeof(config.pathMappingFunction) != "undefined" ) {
+        if( typeof(config.pathMappingFunction) != "object") {
+            console.log(typeof(config.pathMappingFunction));
+            throw "Invalid pathMappingFunction in config file: must be an array of string values.";
+        }
+    }
     if( !config.target ) throw "Invalid config file: missing 'target'";
     else {
         if ( !config.target.host ) throw "Invalid config file: missing 'target.host'";
@@ -275,11 +283,19 @@ function replayResults(results) {
 
             requestSet[runOffset].forEach(function(item){
                 var reqNum = reqSeq ++;
+                var obj = { "path" : item["uri-stem"] };
+
+                if( config.pathMappingFunction ) {
+                    var code = config.pathMappingFunction.join('\n');
+                    var context = new vm.createContext(obj);
+                    var script = new vm.Script(code);
+                    script.runInContext(context);
+                }
 
                 var req = http.request({
                         host: config.target.host,
                         port: config.target.port,
-                        path: item["uri-stem"],
+                        path: obj.path,
                         method: item.method,
                         reqStart: new Date().getTime(),
                     },
@@ -314,7 +330,6 @@ function replayResults(results) {
 
                 req.end();
             });
-
             // Discard the request info so we don't process it again
             delete requestSet[runOffset];
         }
@@ -363,13 +378,10 @@ function exitIfDone() {
             }
         }
 
-        var totals = printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
-                        totalRequests, totalResponses, totalErrors, average.toFixed(2));
+        console.log(printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
+                    totalRequests, totalResponses, totalErrors, average.toFixed(2)));
 
-        if( log_file )
-            wstream.write(totals);
-        else
-            console.log('\n' + totals);
+        if( log_file ) wstream.write('[currentSecond, requestsSent, averageResponse, Timeouts, Responses]\n')
 
         statSet = _.sortBy(statSet, 'runOffset');
 
@@ -378,13 +390,12 @@ function exitIfDone() {
 
             if( typeof s == "undefined") return;
 
-            var line =  printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
-                            key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived));
-
             if( log_file )
-                wstream.write(line + '\n');
+                wstream.write(printf('%d,%d,%d,%d,"%s"\n', key, s.requestSent, s.averageTime.toFixed(2),
+                    s.timeouts, JSON.stringify(s.responseReceived)));
             else
-                console.log(line);
+                console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
 
         });
 
