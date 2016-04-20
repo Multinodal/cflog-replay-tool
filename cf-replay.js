@@ -41,6 +41,16 @@ try {
         if ( !config.target.host ) throw "Invalid config file: missing 'target.host'";
         if ( !config.target.port ) throw "Invalid config file: missing 'target.port'";
     }
+    
+    if(process.argv.length==7)
+    {
+            config.speedupFactor = Number(process.argv[3]);
+            config.startTime = process.argv[4];
+            config.endTime = process.argv[5];
+            config.resultsFile = process.argv[6];
+    }
+    
+    
 } catch (e) {
     console.log('\t' + e + '\n');
     console.log('\tSyntax: node cf-replay.js <config-key>');
@@ -274,7 +284,9 @@ function replayResults(results) {
                 'requestSent' : 0,
                 'averageTime': 0,
                 'responseReceived' : [],
-                'timeouts' : 0
+                'timeouts' : 0,
+                'errors': 0,
+                'totalBytes': 0
             };
 
             console.log('\n* ['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from replay tool.\n' );
@@ -284,7 +296,8 @@ function replayResults(results) {
             requestSet[runOffset].forEach(function(item){
                 var reqNum = reqSeq ++;
                 var obj = { "path" : item["uri-stem"] };
-
+                var reqOutput = "";
+                
                 if( config.pathMappingFunction ) {
                     var code = config.pathMappingFunction.join('\n');
                     var context = new vm.createContext(obj);
@@ -293,27 +306,36 @@ function replayResults(results) {
                 }
 
                 var req = http.request({
+                        agent: false,
                         host: config.target.host,
                         port: config.target.port,
                         path: obj.path,
                         method: item.method,
                         reqStart: new Date().getTime(),
                     },
-                    function(resp) {}
+                    function(resp) {
+                            resp.on('data', function(chunk) {
+                                var sData = statSet[runOffset];
+                                //console.log("xxx");
+                                sData.totalBytes += chunk.length;
+                            });
+                            resp.on('end', function () {
+                                exitIfDone();
+                            });
+                        }
                     )
                     .on('error', function(err) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         console.log('ERROR ON - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms]');
                         console.log(err);
-
+            
                         totalErrors++;
                         incrementTotals(0);
                         updateStats(runOffset, 0, true, 0);
-
                         exitIfDone();
                     })
                     .on('socket', function(socket) {
-                        socket.setTimeout(20 * 1000);
+                        socket.setTimeout(config.requestTimeout);
                         socket.on('timeout', function() {
                             req.abort();
                         });
@@ -324,11 +346,9 @@ function replayResults(results) {
                         incrementTotals(diff);
                         updateStats(runOffset, diff, false, resp.statusCode);
                         console.log(' - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
-
-                        exitIfDone();
-                    });
-
-                req.end();
+                        //exitIfDone();
+                    }).end();
+                //req.end();
             });
             // Discard the request info so we don't process it again
             delete requestSet[runOffset];
@@ -343,14 +363,25 @@ function incrementTotals(diff) {
     totalResponses++;
 }
 
-function updateStats(runOffset, timeTaken, timeout, status) {
+function updateStats(runOffset, timeTaken, timeout,  status) {
     var s = statSet[runOffset];
-
+    var bStatusPassed = true;
+    
     s.requestSent++;
     if( timeout ) s.timeouts ++;
-    if( timeTaken > 0) {
+    
+    if( status == "404" || status == "403" || status == 404 || status == 403)
+    {
+       bStatusPassed = false;
+       s.errors ++;
+    } else {
+        
+        
+    }
+    
+    if( bStatusPassed && timeTaken > 0) {
         s.totalSent += timeTaken;
-        s.averageTime = s.totalSent  / (s.requestSent - s.timeouts);
+        s.averageTime = s.totalSent  / (s.requestSent - s.timeouts - s.errors);
     }
 
     if( _.indexOf(s.responseReceived, status) == -1 )
@@ -381,7 +412,7 @@ function exitIfDone() {
         console.log(printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
                     totalRequests, totalResponses, totalErrors, average.toFixed(2)));
 
-        if( log_file ) wstream.write('currentSecond, requestsSent, averageResponse, Timeouts, Responses\n');
+        if( log_file ) wstream.write('currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses\n');
 
         statSet = _.sortBy(statSet, 'runOffset');
 
@@ -391,8 +422,8 @@ function exitIfDone() {
             if( typeof s == "undefined") return;
 
             if( log_file )
-                wstream.write(printf('%d,%d,%d,%d,"%s"\n', key, s.requestSent, s.averageTime.toFixed(2),
-                    s.timeouts, JSON.stringify(s.responseReceived)));
+                wstream.write(printf('%d,%d,%d,%d,%d,%d,"%s"\n', key, s.requestSent, s.averageTime.toFixed(2),
+                    s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
             else
                 console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
                     key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));

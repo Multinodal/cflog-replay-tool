@@ -1,0 +1,15 @@
+{
+  "bucketName": "tdtile-logsamples",
+  "bucketPath": "log-samples",
+  "speedupFactor": "1",
+  "startTime": "2016-03-01T00:00:00.000Z",
+  "endTime" : "2016-03-01T00:10:00.000Z",
+  "requestTimeout" : 20000,
+  "keepAlive" : false,
+  "target": {
+    "host": "tr.trimblemapsdev.com",
+    "port": "80"
+  },
+  "RegExpPart8" : { "regexp" : ".+/[1-9][2-9]/[0-9]+/[0-9]+.+(jpg|png)" },
+  "resultsFile" : "tilerouter.txt"
+}

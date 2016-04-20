@@ -15,6 +15,7 @@ function getRandomBetween(min, max) {
 function pushIntoQueue(item) {
     setTimeout( function() {
         item.res.send('Hello!');
+        item.res.end();
         outCnt ++;
         totalSent++;
     },  getRandomBetween(150, 500));

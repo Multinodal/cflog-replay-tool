@@ -1,0 +1,15 @@
+{
+  "bucketName": "tdtile-logsamples",
+  "bucketPath": "log-samples",
+  "speedupFactor": "80",
+  "startTime": "2016-03-01T00:00:00.000Z",
+  "endTime" : "2016-03-01T00:10:00.000Z",
+  "requestTimeout" : 20000,
+  "keepAlive" : false,
+  "target": {
+    "host": "tr.trimblemapsdev.com",
+    "port": "80"
+  },
+  "XRegExpPart14" : { "regexp" : "^Miss" },
+  "resultsFile" : "tilerouterX80_output.txt"
+}

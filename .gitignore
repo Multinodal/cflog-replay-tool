@@ -31,3 +31,6 @@ node_modules
 
 # Optional REPL history
 .node_repl_history
+node_modules_linux/
+config/oldconfigs/tilerouter10.json
+config/oldconfigs/

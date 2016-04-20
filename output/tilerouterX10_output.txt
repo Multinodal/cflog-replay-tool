@@ -1,0 +1,4 @@
+currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses
+0,66,2484.33,0,836698,0,"[200]"
+1,44,1661.45,0,564797,0,"[200]"
+2,56,1741.59,0,700720,0,"[200]"

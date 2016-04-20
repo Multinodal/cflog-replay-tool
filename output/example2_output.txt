@@ -1,0 +1,8 @@
+Totals :  requests (2531), responses (2531), http errors (0), average response time: 447.81 ms.
+second 0: 172 requests - average time: 3.91 ms, timeouts: 0, responses received: [200]
+second 1: 290 requests - average time: 2.29 ms, timeouts: 0, responses received: [200]
+second 2: 495 requests - average time: 1.22 ms, timeouts: 0, responses received: [200]
+second 3: 556 requests - average time: 1.03 ms, timeouts: 0, responses received: [200]
+second 4: 412 requests - average time: 1.44 ms, timeouts: 0, responses received: [200]
+second 5: 436 requests - average time: 1.29 ms, timeouts: 0, responses received: [200]
+second 6: 170 requests - average time: 3.22 ms, timeouts: 0, responses received: [200]
