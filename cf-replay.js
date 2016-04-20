@@ -339,6 +339,7 @@ function replayResults(results) {
                         exitIfDone();
                     })
                     .on('socket', function(socket) {
+                        /*
                         socket.setTimeout(config.requestTimeout);
                         socket.on('timeout', function() {
                             try {
@@ -349,10 +350,12 @@ function replayResults(results) {
                             } catch(ex)
                             {
                                 //unhandled
-                                console.log("WARNING: exception in timeout");
+                                //console.log("WARNING: exception in timeout");
                             }
                         });
+                        */
                         timings[reqNum] = new Date().getTime();
+                        
                     })
                     .on('response', function(resp) {
                         var diff = (new Date().getTime()) - timings[reqNum];
