@@ -19,9 +19,9 @@ if ( process.argv.length < 3 ) {
     console.log('Syntax: node cf-replay.js <config-key>');
     process.exit(1);
 }
-
+    var config;
 try {
-    var config = konphyg(process.argv[2]);
+    config = konphyg(process.argv[2]);
 
     if( !config.bucketName ) throw "Invalid config file: missing Amazon S3 'bucketName'";
     if( !config.bucketPath ) throw "Invalid config file: missing Amazon S3 'bucketPath' (if there is no sub-folder(s), just put an empty string value)";
@@ -56,6 +56,8 @@ try {
     console.log('\tSyntax: node cf-replay.js <config-key>');
     process.exit(1);
 }
+
+var speedFactor = config.speedupFactor;
 
 var startDate = new Date(config.startTime),
     endDate = new Date(config.endTime);
@@ -280,6 +282,7 @@ function replayResults(results) {
 
             statSet[runOffset] = {
                 'runOffset' : runOffset,
+                'speedupFactor': config.speedupFactor,
                 'totalSent' : 0,
                 'requestSent' : 0,
                 'averageTime': 0,
@@ -287,6 +290,7 @@ function replayResults(results) {
                 'timeouts' : 0,
                 'errors': 0,
                 'totalBytes': 0
+                
             };
 
             console.log('\n* ['+new Date(first.date)+'] '+requestSet[runOffset].length+' requests sent from replay tool.\n' );
@@ -345,7 +349,7 @@ function replayResults(results) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         incrementTotals(diff);
                         updateStats(runOffset, diff, false, resp.statusCode);
-                        console.log(' - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
+                        console.log(' - Speed: ' + config.speedupFactor + '  - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
                         //exitIfDone();
                     }).end();
                 //req.end();
@@ -412,7 +416,7 @@ function exitIfDone() {
         console.log(printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
                     totalRequests, totalResponses, totalErrors, average.toFixed(2)));
 
-        if( log_file ) wstream.write('currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses\n');
+        // if( log_file ) wstream.write('speedFactor,currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses\n');
 
         statSet = _.sortBy(statSet, 'runOffset');
 
@@ -422,7 +426,7 @@ function exitIfDone() {
             if( typeof s == "undefined") return;
 
             if( log_file )
-                wstream.write(printf('%d,%d,%d,%d,%d,%d,"%s"\n', key, s.requestSent, s.averageTime.toFixed(2),
+                wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
                     s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
             else
                 console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
