@@ -13,8 +13,9 @@
   "RegExpPart14" : { "regexp" : "^Miss" },
   "resultsFile" : "example2_results.csv",
   "pathMappingFunction" : [
-    "   var p = path; ",
-    "   p += ''; ",
-    "   path = p; "
+    "   var p =path.split('/'); ",
+    "   p.splice(0,1);  ",
+    "   p.splice(0,1);  ",
+    "   path = '/mapview/yx/'+p.join('/'); "
   ]
 }

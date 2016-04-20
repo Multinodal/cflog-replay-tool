@@ -341,7 +341,16 @@ function replayResults(results) {
                     .on('socket', function(socket) {
                         socket.setTimeout(config.requestTimeout);
                         socket.on('timeout', function() {
-                            req.abort();
+                            try {
+                            if( typepf(req) != "undefined" && typeof(req.abort) == "function") 
+                            {
+                                req.abort();
+                            }
+                            } catch(ex)
+                            {
+                                //unhandled
+                                console.log("WARNING: exception in timeout");
+                            }
                         });
                         timings[reqNum] = new Date().getTime();
                     })
@@ -445,6 +454,19 @@ function JSONDateHelp() {
     console.log('\t-----');
     console.log("\tjsonDate format example : 2016-03-01T08:15:00.123Z\n");
     console.log("\tReference: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toJSON\n");
+}
+
+
+function remove(arr, item) {
+    for(var i = arr.length; i--;) if(arr[i] == item) arr.splice(i, 1);
+}
+ 
+function remove_parts(uri, char, parts) {
+    var p = uri.split(char), c = p.length;
+ 
+    if( !p[0].length ) remove(p, p[0]);
+    while(c--) if( parts[c] == true ) remove(p, p[c]);
+    return p.join(char);
 }
 
 

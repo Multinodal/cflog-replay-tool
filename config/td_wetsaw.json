@@ -7,9 +7,16 @@
   "requestTimeout" : 20000,
   "keepAlive" : false,
   "target": {
-    "host": "tr.trimblemapsdev.com",
+    "xhost": "wetsawts.trimblemapsdev.com",
+    "host": "54.165.103.99",
     "port": "80"
   },
   "RegExpPart8" : { "regexp" : ".+/[1-9][2-9]/[0-9]+/[0-9]+.+(jpg|png)" },
-  "resultsFile" : "tilerouter.txt"
+  "resultsFile" : "tilerouter.txt",
+  "pathMappingFunction" : [
+    "   var p =path.split('/'); ",
+    "   p.splice(0,1);  ",
+    "   p.splice(0,1);  ",
+    "   path = '/wsgi-scripts/wetsaw.wsgi/mapview/yx/'+p.join('/'); "
+  ]
 }

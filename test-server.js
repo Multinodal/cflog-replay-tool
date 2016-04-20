@@ -18,6 +18,7 @@ function pushIntoQueue(item) {
         item.res.end();
         outCnt ++;
         totalSent++;
+console.log("answered: "+item.req.originalUrl);
     },  getRandomBetween(150, 500));
 }
 
