@@ -229,6 +229,9 @@ var totalRequests = 0,
     totalResponses = 0,
     totalErrors = 0,
     totalMilliseconds = 0;
+var testTotalRequests = 0;
+var testTotalResponses = 0;
+var nCountTheSame = 0;
 
 var interval = null;
 
@@ -272,9 +275,7 @@ function replayResults(results) {
     reqSeq = 0;
     var execStart = Date.now();
 
-    var testTotalRequests = 0;
-    var testTotalResponses = 0;
-    var nCountTheSame = 0;
+
     
     debuginterval = setInterval(function() {
         
@@ -443,7 +444,7 @@ var fs = require('fs');
 var printf = require('util').format;
 
 function exitIfDone() {
-    if (totalResponses >= reqSeq) {
+    if (totalResponses >= reqSeq && nCountTheSame>4) {
         var average = totalMilliseconds / (totalResponses - totalErrors);
         var log_file = (typeof(config.resultsFile) == "string" && config.resultsFile.length > 0);
         var wstream = null;
