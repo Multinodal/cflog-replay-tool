@@ -223,6 +223,8 @@ var http = require('http');
 http.globalAgent.keepAlive = config.keepAlive;
 http.globalAgent.keepAliveMsecs = config.requestTimeout;
 
+var reqSeq = 0;
+
 var totalRequests = 0,
     totalResponses = 0,
     totalErrors = 0,
@@ -267,7 +269,7 @@ function replayResults(results) {
     console.log("Executing...\n\n");
 
     var timings = [];
-    var reqSeq = 0;
+    reqSeq = 0;
     var execStart = Date.now();
 
     var testTotalRequests = 0;
