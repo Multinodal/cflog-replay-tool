@@ -285,7 +285,13 @@ function replayResults(results) {
         
         if(nCountTheSame>=5)
         {
-            exitIfDone();
+            if(testTotalRequests==testTotalResponses)
+            {
+                console.log("Attempting to end process...")
+                exitIfDone();
+            } else {
+                console.log("Waiting for synchronization with Requests and Responses")
+            }
         }
         
         testTotalRequests = reqSeq;
@@ -293,6 +299,7 @@ function replayResults(results) {
 
         console.log("Total Requests: "+testTotalRequests +"  Total Responses: "+testTotalResponses );
 
+        
     
     },5000);
     
@@ -434,7 +441,7 @@ var fs = require('fs');
 var printf = require('util').format;
 
 function exitIfDone() {
-    if (totalResponses >= totalRequests) {
+    if (totalResponses >= reqSeq) {
         var average = totalMilliseconds / (totalResponses - totalErrors);
         var log_file = (typeof(config.resultsFile) == "string" && config.resultsFile.length > 0);
         var wstream = null;
