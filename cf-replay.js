@@ -276,7 +276,7 @@ function replayResults(results) {
     
     debuginterval = setInterval(function() {
         
-        if(testTotalRequests == totalRequests)
+        if(testTotalRequests == reqSeq)
         {
             nCountTheSame++;
         } else {
@@ -288,12 +288,15 @@ function replayResults(results) {
             exitIfDone();
         }
         
-        if(testTotalRequests==0)
+        if(reqSeq==0)
         {
-            testTotalRequests = totalRequests;
+            testTotalRequests = reqSeq;
             testTotalResponses = totalResponses;
         }
         console.log("Total Requests: "+totalRequests +"  Total Responses: "+totalResponses );
+
+        testTotalRequests = reqSeq;
+        testTotalResponses = totalResponses;
     
     },5000);
     
