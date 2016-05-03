@@ -270,6 +270,10 @@ function replayResults(results) {
     var reqSeq = 0;
     var execStart = Date.now();
 
+    debuginterval = setInterval(function() {
+    console.log("Total Requests: "+totalRequests +"  Total Responses: "+totalResponses );
+    },5000);
+    
     interval = setInterval(function() {
 
         // Determine how much time has passed
