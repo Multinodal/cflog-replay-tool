@@ -270,8 +270,31 @@ function replayResults(results) {
     var reqSeq = 0;
     var execStart = Date.now();
 
+    var testTotalRequests = 0;
+    var testTotalResponses = 0;
+    var nCountTheSame = 0;
+    
     debuginterval = setInterval(function() {
-    console.log("Total Requests: "+totalRequests +"  Total Responses: "+totalResponses );
+        
+        if(testTotalRequests == totalRequests)
+        {
+            nCountTheSame++;
+        } else {
+            nCountTheSame=0;
+        }
+        
+        if(nCountTheSame>=5)
+        {
+            exitIfDone();
+        }
+        
+        if(testTotalRequests==0)
+        {
+            testTotalRequests = totalRequests;
+            testTotalResponses = totalResponses;
+        }
+        console.log("Total Requests: "+totalRequests +"  Total Responses: "+totalResponses );
+    
     },5000);
     
     interval = setInterval(function() {
@@ -365,7 +388,7 @@ function replayResults(results) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         incrementTotals(diff);
                         updateStats(runOffset, diff, false, resp.statusCode);
-                        console.log(' - Speed: ' + config.speedupFactor + '  - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
+                        //console.log(' - Speed: ' + config.speedupFactor + '  - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
                         //exitIfDone();
                     }).end();
                 //req.end();
