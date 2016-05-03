@@ -485,6 +485,8 @@ function exitIfDone() {
         if( log_file ) {
             wstream.end();
             console.log('\n\t' + config.resultsFile + ' closed.');
+            console.log("exiting!")
+            process.exit(0)
         }
     }
 }
