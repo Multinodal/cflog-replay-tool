@@ -397,7 +397,7 @@ function replayResults(results) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         incrementTotals(diff);
                         updateStats(runOffset, diff, false, resp.statusCode);
-                        //console.log(' - Speed: ' + config.speedupFactor + '  - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
+                        console.log(' - Speed: ' + config.speedupFactor + '  - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
                         //exitIfDone();
                     }).end();
                 //req.end();
