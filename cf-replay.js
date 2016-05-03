@@ -288,15 +288,11 @@ function replayResults(results) {
             exitIfDone();
         }
         
-        if(reqSeq==0)
-        {
-            testTotalRequests = reqSeq;
-            testTotalResponses = totalResponses;
-        }
-        console.log("Total Requests: "+totalRequests +"  Total Responses: "+totalResponses );
-
         testTotalRequests = reqSeq;
         testTotalResponses = totalResponses;
+
+        console.log("Total Requests: "+testTotalRequests +"  Total Responses: "+testTotalResponses );
+
     
     },5000);
     
