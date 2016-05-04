@@ -492,8 +492,8 @@ function exitIfDone() {
             {
                 wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
                     s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
-                                    console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
-                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+//               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+//                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
             }       
             else
             {
@@ -503,7 +503,11 @@ function exitIfDone() {
             
             if(nCount === statSet.length)
             {
+                console.log("same")
                  callback();
+                 
+            } else {
+                console.log("different "+nCount+" "+statSet.length)
             }
 
         });
