@@ -7,8 +7,8 @@
   "requestTimeout" : 20000,
   "keepAlive" : false,
   "target": {
-    "host": "wetsawts.trimblemapsdev.com",
-    "xhost": "54.165.103.99",
+    "xhost": "wetsawts.trimblemapsdev.com",
+    "host": "54.165.103.99",
     "port": "80"
   },
   "RegExpPart8" : { "regexp" : ".+/[1-9][2-9]/[0-9]+/[0-9]+.+(jpg|png)" },
