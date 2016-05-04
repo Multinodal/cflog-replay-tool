@@ -484,38 +484,41 @@ function exitIfDone() {
         
         Object.keys(statSet).forEach(function(key) {
             var s = statSet[key];
-             nCount++;
-             
-            if( typeof s == "undefined") return;
 
-            if( log_file )
+            nCount++;
+             
+            if( typeof s == "undefined") 
             {
-                wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
-                    s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
-//               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
-//                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
-            }       
-            else
-            {
-                console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
-                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+                console.log("WARNING: none for this seconnd "+key);
+            } else {
+                if( log_file )
+                {
+                    wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
+                        s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
+    //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+    //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+                }       
+                else
+                {
+                    console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+                        key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+                }
             }
             
             if(nCount === statSet.length)
-            {
-                console.log("same")
-                 callback();
-                 
-            } else {
-                console.log("different "+nCount+" "+statSet.length)
-            }
+                {
+                    console.log("same")
+                     callback();
+                     
+                } else {
+                    console.log("different "+nCount+" "+statSet.length)
+                }
 
         });
 
-            if( log_file ) {
-            
-            //wstream.end();
-            
+        if( log_file ) {
+        
+        //wstream.end();
         }
     }
 }
