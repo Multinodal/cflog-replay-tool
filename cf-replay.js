@@ -454,6 +454,12 @@ function exitIfDone() {
         if( log_file)  {
             try {
                 wstream = fs.createWriteStream(config.resultsFile);
+                wstream.on("finish", function() {
+                    console.log('\n\t' + config.resultsFile + ' closed.');
+                        console.log("exiting!");
+                        process.exit(0) ;
+
+                });
                 console.log('\n\t' + config.resultsFile + ' created for logging output.');
             }
             catch(err) {
@@ -462,31 +468,50 @@ function exitIfDone() {
         }
 
         console.log(printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
-                    totalRequests, totalResponses, totalErrors, average.toFixed(2)));
+                    reqSeq, totalResponses, totalErrors, average.toFixed(2)));
 
-        // if( log_file ) wstream.write('speedFactor,currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses\n');
+         if( log_file ) wstream.write('speedFactor,currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses\n');
 
         statSet = _.sortBy(statSet, 'runOffset');
-
+        
+        function callback(){ 
+                        console.log("ending output stream!");
+                        wstream.end();                    
+                        
+                    }
+                    
+        nCount = 0;
+        
         Object.keys(statSet).forEach(function(key) {
             var s = statSet[key];
-
+             nCount++;
+             
             if( typeof s == "undefined") return;
 
             if( log_file )
+            {
                 wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
                     s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
+                                    console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+            }       
             else
+            {
                 console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
                     key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+            }
+            
+            if(nCount === statSet.length)
+            {
+                 callback();
+            }
 
         });
 
-        if( log_file ) {
-            wstream.end();
-            console.log('\n\t' + config.resultsFile + ' closed.');
-            console.log("exiting!")
-            process.exit(0)
+            if( log_file ) {
+            
+            //wstream.end();
+            
         }
     }
 }
