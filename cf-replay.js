@@ -473,7 +473,7 @@ function updateStats(runOffset, timeTaken, URL,  status) {
     
     if(errType!="")
     {
-        var oErr={ 'status': status, 'error': errType, 'uri': URL  };
+        var oErr={ 'second': runnOffset, status': status, 'error': errType, 'uri': URL  };
         failedSet.push(oErr); 
         console.log("Logging Failed Attempt: " + JSON.stringify(oErr));
     }
@@ -564,7 +564,7 @@ function ecallback(){
             } else {
                 if( log_file )
                 {
-                    estream.write(printf('%s\t%s\t%s"\n', s.status, s.error, s.uri));
+                    estream.write(printf('%d\t%d\t%s\t%s\t%s"\n', nCount, s.second, s.status, s.error, s.uri));
     //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
     //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
                     //console.log("would write to file ...");
