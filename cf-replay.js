@@ -472,7 +472,7 @@ function updateStats(runOffset, timeTaken, URL,  status) {
     }
     
     var oErr={ 'status': status, 'error': errType, 'url': URL  };
-    failedSet.push(b); 
+    failedSet.push(oErr); 
     
     console.log("Logging Failed Attempt: " + oErr);
     
