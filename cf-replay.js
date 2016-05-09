@@ -228,7 +228,8 @@ var reqSeq = 0;
 var totalRequests = 0,
     totalResponses = 0,
     totalErrors = 0,
-    totalMilliseconds = 0;
+    totalMilliseconds = 0,
+    totalTimeouts=0;
 var testTotalRequests = 0;
 var testTotalResponses = 0;
 var nCountTheSame = 0;
@@ -236,6 +237,7 @@ var nCountTheSame = 0;
 var interval = null;
 
 var statSet = [];
+var failedSet = [];
 
 function replayResults(results) {
     var dtStart = Date.now();
@@ -325,6 +327,8 @@ function replayResults(results) {
                 'responseReceived' : [],
                 'timeouts' : 0,
                 'errors': 0,
+                'connect_errors': 0,
+                'read_errors': 0,                
                 'totalBytes': 0
                 
             };
@@ -367,11 +371,21 @@ function replayResults(results) {
                     .on('error', function(err) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         console.log('ERROR ON - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms]');
+                             
+                        switch(err.code)     
+                        {
+                            case 'ECONNRESET':
+                                break;
+                            case 'EMFILE':
+                                break;
+                        }
+                             
                         console.log(err);
             
                         totalErrors++;
                         incrementTotals(0);
-                        updateStats(runOffset, 0, true, 0);
+                        
+                        updateStats(runOffset, 0, true, err.code);
                         exitIfDone();
                     })
                     .on('socket', function(socket) {
@@ -420,12 +434,25 @@ function updateStats(runOffset, timeTaken, timeout,  status) {
     var bStatusPassed = true;
     
     s.requestSent++;
+    
     if( timeout ) s.timeouts ++;
+        s.requestSent++;
+    
+    if( error ) s.errors ++;
+    
     
     if( status == "404" || status == "403" || status == 404 || status == 403)
     {
        bStatusPassed = false;
        s.errors ++;
+    } else     if( status == "ECONNRESET")
+    {
+       bStatusPassed = false;
+       s.read_errors ++;
+    } else    if( status == "EMFILE" || status == "ECONNREFUSED")
+    {
+       bStatusPassed = false;
+       s.connect_errors ++;
     } else {
         
         
@@ -442,6 +469,8 @@ function updateStats(runOffset, timeTaken, timeout,  status) {
 
 var fs = require('fs');
 var printf = require('util').format;
+
+
 
 function exitIfDone() {
     if (totalResponses >= reqSeq && nCountTheSame>4) {
