@@ -473,7 +473,7 @@ function updateStats(runOffset, timeTaken, URL,  status) {
     
     if(errType!="")
     {
-        var oErr={ 'status': status, 'error': errType, 'url': URL  };
+        var oErr={ 'status': status, 'error': errType, 'uri': URL  };
         failedSet.push(oErr); 
         console.log("Logging Failed Attempt: " + JSON.stringify(oErr));
     }
@@ -496,7 +496,7 @@ function exitIfDone() {
         var average = totalMilliseconds / (totalResponses - totalErrors);
         var log_file = (typeof(config.resultsFile) == "string" && config.resultsFile.length > 0);
         var wstream = null;
-
+        var estream = null;
         clearInterval(interval);
 
         if( log_file)  {
@@ -515,18 +515,79 @@ function exitIfDone() {
             }
         }
 
+        if( log_file)  {
+            try {
+                estream = fs.createWriteStream(config.resultsFile+".err");
+                estream.on("finish", function() {
+                    console.log('\n\t' + config.resultsFile+".err" + ' closed.');
+                        console.log("exiting!");
+                        //process.exit(0) ;
+
+                });
+                console.log('\n\t' + config.resultsFile + ' created for logging output.');
+            }
+            catch(err) {
+                console.trace(err);
+            }
+        }        
+        
         console.log(printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
                     reqSeq, totalResponses, totalErrors, average.toFixed(2)));
 
          if( log_file ) wstream.write('speedFactor,currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses\n');
 
         statSet = _.sortBy(statSet, 'runOffset');
+
+function ecallback(){ 
+                        console.log("ending Errors output stream!");
+                        estream.end();                    
+                        
+                    }
         
         function callback(){ 
                         console.log("ending output stream!");
                         wstream.end();                    
                         
                     }
+                    
+
+        nCount = 0;
+        
+        failedSet.forEach(function(s) {
+            //var s = failedSet[key];
+
+            nCount++;
+             
+            if( typeof s == "undefined") 
+            {
+                console.log("WARNING: none for this seconnd "+key);
+            } else {
+                if( log_file )
+                {
+                    //estream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
+                     //   s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
+    //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+    //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+                    console.log("would write to file ...");
+                }       
+                else
+                {
+                    console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
+                        key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+                }
+            }
+            
+            if(nCount === failedSet.length)
+                {
+                    //console.log("same")
+                     ecallback();
+                     
+                } else {
+                    //console.log("different "+nCount+" "+statSet.length)
+                }
+
+        });
+
                     
         nCount = 0;
         
