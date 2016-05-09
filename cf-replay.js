@@ -438,21 +438,24 @@ function updateStats(runOffset, timeTaken, timeout,  status) {
     if( timeout ) s.timeouts ++;
         s.requestSent++;
     
-    if( error ) s.errors ++;
+    //if( error ) s.errors ++;
     
     
     if( status == "404" || status == "403" || status == 404 || status == 403)
     {
+       console.log("ERROR: Logged HTTP Error");
        bStatusPassed = false;
        s.errors ++;
     } else     if( status == "ECONNRESET")
     {
+        console.log("ERROR: Logged Read Error");
        bStatusPassed = false;
        s.read_errors ++;
     } else    if( status == "EMFILE" || status == "ECONNREFUSED")
     {
        bStatusPassed = false;
        s.connect_errors ++;
+               console.log("ERROR: Logged Connection Error");
     } else {
         
         
