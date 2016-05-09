@@ -385,7 +385,7 @@ function replayResults(results) {
                         totalErrors++;
                         incrementTotals(0);
                         
-                        updateStats(runOffset, 0, true, err.code);
+                        updateStats(runOffset, 0, obj.path, err.code);
                         exitIfDone();
                     })
                     .on('socket', function(socket) {
@@ -410,7 +410,7 @@ function replayResults(results) {
                     .on('response', function(resp) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         incrementTotals(diff);
-                        updateStats(runOffset, diff, false, resp.statusCode);
+                        updateStats(runOffset, diff, obj.path, resp.statusCode);
                         console.log(' - Speed: ' + config.speedupFactor + '  - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
                         //exitIfDone();
                     }).end();
@@ -429,37 +429,52 @@ function incrementTotals(diff) {
     totalResponses++;
 }
 
-function updateStats(runOffset, timeTaken, timeout,  status) {
+function updateStats(runOffset, timeTaken, URL,  status) {
     var s = statSet[runOffset];
     var bStatusPassed = true;
     
     s.requestSent++;
     
-    if( timeout ) s.timeouts ++;
+    //if( timeout ) s.timeouts ++;
         s.requestSent++;
     
     //if( error ) s.errors ++;
     
+    var errType = "";
     
     if( status == "404" || status == "403" || status == 404 || status == 403)
     {
        console.log("ERROR: Logged HTTP Error");
        bStatusPassed = false;
+       errType = "HTTP";
        s.errors ++;
     } else     if( status == "ECONNRESET")
     {
         console.log("ERROR: Logged Read Error");
        bStatusPassed = false;
+       errType = "READ";
        s.read_errors ++;
     } else    if( status == "EMFILE" || status == "ECONNREFUSED")
     {
        bStatusPassed = false;
        s.connect_errors ++;
-               console.log("ERROR: Logged Connection Error");
+       errType = "CONNECT";
+       console.log("ERROR: Logged Connection Error");
+    } else    if( status == "ETIMEDOUT" )
+    {
+       errType = "TIMEOUT";
+       bStatusPassed = false;
+       s.timeouts ++;
+       console.log("ERROR: Logged Connection Error");
     } else {
         
         
     }
+    
+    var oErr={ 'status': status, 'error': errType, 'url': URL  };
+    failedS.push(b); 
+    
+    console.log("Logging Failed Attempt: " + oErr);
     
     if( bStatusPassed && timeTaken > 0) {
         s.totalSent += timeTaken;
