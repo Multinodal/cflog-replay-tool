@@ -471,11 +471,12 @@ function updateStats(runOffset, timeTaken, URL,  status) {
         
     }
     
-    var oErr={ 'status': status, 'error': errType, 'url': URL  };
-    failedSet.push(oErr); 
-    
-    console.log("Logging Failed Attempt: " + oErr);
-    
+    if(errType!="")
+    {
+        var oErr={ 'status': status, 'error': errType, 'url': URL  };
+        failedSet.push(oErr); 
+        console.log("Logging Failed Attempt: " + JSON.stringify(oErr));
+    }
     if( bStatusPassed && timeTaken > 0) {
         s.totalSent += timeTaken;
         s.averageTime = s.totalSent  / (s.requestSent - s.timeouts - s.errors);
