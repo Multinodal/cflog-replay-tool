@@ -534,7 +534,7 @@ function exitIfDone() {
         console.log(printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
                     reqSeq, totalResponses, totalErrors, average.toFixed(2)));
 
-         if( log_file ) wstream.write('speedFactor,currentSecond, requestsSent, averageResponse, Timeouts, TotalBytes, Total403and404, Responses\n');
+         if( log_file ) wstream.write('speedFactor,currentSecond, requestsSent, averageResponse, Timeouts, ConnErrors, ReadErrors,  HTTPErrors,TotalBytes, Responses\n');
 
         statSet = _.sortBy(statSet, 'runOffset');
 
@@ -564,11 +564,10 @@ function ecallback(){
             } else {
                 if( log_file )
                 {
-                    //estream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
-                     //   s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
+                    estream.write(printf('%s\t%s\t%s"\n', s.status, s.error, s.uri));
     //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
     //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
-                    console.log("would write to file ...");
+                    //console.log("would write to file ...");
                 }       
                 else
                 {
@@ -603,7 +602,7 @@ function ecallback(){
                 if( log_file )
                 {
                     wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
-                        s.timeouts, s.totalBytes, s.errors, JSON.stringify(s.responseReceived)));
+                        s.timeouts,  s.connect_errors, s.read_errors, s.errors, s.totalBytes, JSON.stringify(s.responseReceived)));
     //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
     //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
                 }       
