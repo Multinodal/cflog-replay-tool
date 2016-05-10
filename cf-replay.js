@@ -349,14 +349,16 @@ function replayResults(results) {
                     script.runInContext(context);
                 }
 
-                var req = http.request({
+                var requestInfo = {
                         agent: false,
                         host: config.target.host,
                         port: config.target.port,
                         path: obj.path,
                         method: item.method,
                         reqStart: new Date().getTime(),
-                    },
+                        reqNum: reqSeq
+                    };
+                var req = http.request(requestInfo,
                     function(resp) {
                             resp.on('data', function(chunk) {
                                 var sData = statSet[runOffset];
@@ -385,7 +387,7 @@ function replayResults(results) {
                         totalErrors++;
                         incrementTotals(0);
                         
-                        updateStats(runOffset, 0, obj.path, err.code,reqSeq);
+                        updateStats(runOffset, 0, obj.path, err.code,requestInfo.reqNum);
                         exitIfDone();
                     })
                     .on('socket', function(socket) {
@@ -601,7 +603,7 @@ function ecallback(){
             } else {
                 if( log_file )
                 {
-                    wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
+                    wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
                         s.timeouts,  s.connect_errors, s.read_errors, s.errors, s.totalBytes, JSON.stringify(s.responseReceived).replace(/['"]+/g, '')));
     //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
     //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
