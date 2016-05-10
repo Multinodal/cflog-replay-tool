@@ -536,7 +536,7 @@ function exitIfDone() {
         console.log(printf("Totals :  requests (%d), responses (%d), http errors (%d), average response time: %d ms.\n",
                     reqSeq, totalResponses, totalErrors, average.toFixed(2)));
 
-         if( log_file ) wstream.write('speedFactor,currentSecond, requestsSent, averageResponse, Timeouts, ConnErrors, ReadErrors,  HTTPErrors,TotalBytes, Responses\n');
+         if( log_file ) wstream.write('speedFactor,currentSecond,requestsSent,averageResponse,Timeouts,ConnErrors,ReadErrors,HTTPErrors,TotalBytes,Responses\n');
 
         statSet = _.sortBy(statSet, 'runOffset');
 
