@@ -385,7 +385,7 @@ function replayResults(results) {
                         totalErrors++;
                         incrementTotals(0);
                         
-                        updateStats(runOffset, 0, obj.path, err.code);
+                        updateStats(runOffset, 0, obj.path, err.code,reqSeq);
                         exitIfDone();
                     })
                     .on('socket', function(socket) {
@@ -410,7 +410,7 @@ function replayResults(results) {
                     .on('response', function(resp) {
                         var diff = (new Date().getTime()) - timings[reqNum];
                         incrementTotals(diff);
-                        updateStats(runOffset, diff, obj.path, resp.statusCode);
+                        updateStats(runOffset, diff, obj.path, resp.statusCode,reqSeq);
                         console.log(' - Speed: ' + config.speedupFactor + '  - #' + reqNum + ' [path = ' + item["uri-stem"] + '] [DT=' + diff + 'ms, R=' + resp.statusCode + ']');
                         //exitIfDone();
                     }).end();
@@ -429,7 +429,7 @@ function incrementTotals(diff) {
     totalResponses++;
 }
 
-function updateStats(runOffset, timeTaken, URL,  status) {
+function updateStats(runOffset, timeTaken, URL,  status,reqnum) {
     var s = statSet[runOffset];
     var bStatusPassed = true;
     
@@ -473,7 +473,7 @@ function updateStats(runOffset, timeTaken, URL,  status) {
     
     if(errType!="")
     {
-        var oErr={ 'second': runnOffset, status': status, 'error': errType, 'uri': URL  };
+        var oErr={ 'reqNum': reqnum, 'second': runnOffset, 'status': status, 'error': errType, 'uri': URL  };
         failedSet.push(oErr); 
         console.log("Logging Failed Attempt: " + JSON.stringify(oErr));
     }
@@ -564,7 +564,7 @@ function ecallback(){
             } else {
                 if( log_file )
                 {
-                    estream.write(printf('%d\t%d\t%s\t%s\t%s"\n', nCount, s.second, s.status, s.error, s.uri));
+                    estream.write(printf('%d\t%d\t%d\t%s\t%s\t%s"\n', nCount, s.reqNum, s.second, s.status, s.error, s.uri));
     //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
     //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
                     //console.log("would write to file ...");
