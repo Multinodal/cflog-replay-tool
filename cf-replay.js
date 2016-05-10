@@ -541,13 +541,13 @@ function exitIfDone() {
         statSet = _.sortBy(statSet, 'runOffset');
 
 function ecallback(){ 
-                        console.log("ending Errors output stream!");
+                        //console.log("ending Errors output stream!");
                         estream.end();                    
                         
                     }
         
         function callback(){ 
-                        console.log("ending output stream!");
+                        //console.log("ending output stream!");
                         wstream.end();                    
                         
                     }
@@ -562,7 +562,7 @@ function ecallback(){
              
             if( typeof s == "undefined") 
             {
-                console.log("WARNING: none for this seconnd "+key);
+                //console.log("WARNING: none for this seconnd "+key);
             } else {
                 if( log_file )
                 {
@@ -599,7 +599,7 @@ function ecallback(){
              
             if( typeof s == "undefined") 
             {
-                console.log("WARNING: none for this seconnd "+key);
+                //console.log("WARNING: none for this seconnd "+key);
             } else {
                 if( log_file )
                 {
@@ -617,11 +617,11 @@ function ecallback(){
             
             if(nCount === statSet.length)
                 {
-                    console.log("same")
+                    //console.log("same")
                      callback();
                      
                 } else {
-                    console.log("different "+nCount+" "+statSet.length)
+                    //console.log("different "+nCount+" "+statSet.length)
                 }
 
         });
