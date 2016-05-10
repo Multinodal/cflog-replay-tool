@@ -473,7 +473,7 @@ function updateStats(runOffset, timeTaken, URL,  status,reqnum) {
     
     if(errType!="")
     {
-        var oErr={ 'reqNum': reqnum, 'second': runnOffset, 'status': status, 'error': errType, 'uri': URL  };
+        var oErr={ 'reqNum': reqnum, 'second': runOffset, 'status': status, 'error': errType, 'uri': URL  };
         failedSet.push(oErr); 
         console.log("Logging Failed Attempt: " + JSON.stringify(oErr));
     }
