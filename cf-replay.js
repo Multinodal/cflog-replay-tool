@@ -442,7 +442,7 @@ function updateStats(runOffset, timeTaken, URL,  status) {
     
     var errType = "";
     
-    if( status == "404" || status == "403" || status == 404 || status == 403)
+    if( status == "404" || status == "403" || status == 404 || status == 403||status == "500" || status == "504" || status == 504 || status == 504)
     {
        console.log("ERROR: Logged HTTP Error");
        bStatusPassed = false;
@@ -479,7 +479,7 @@ function updateStats(runOffset, timeTaken, URL,  status) {
     }
     if( bStatusPassed && timeTaken > 0) {
         s.totalSent += timeTaken;
-        s.averageTime = s.totalSent  / (s.requestSent - s.timeouts - s.errors);
+        s.averageTime = s.totalSent  / (s.requestSent - s.timeouts - s.errors - s.read_errors-s.connect_errors );
     }
 
     if( _.indexOf(s.responseReceived, status) == -1 )
@@ -601,15 +601,15 @@ function ecallback(){
             } else {
                 if( log_file )
                 {
-                    wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
-                        s.timeouts,  s.connect_errors, s.read_errors, s.errors, s.totalBytes, JSON.stringify(s.responseReceived)));
+                    wstream.write(printf('%d,%d,%d,%d,%d,%d,%d,%d,"%s"\n', s.speedupFactor, key, s.requestSent, s.averageTime.toFixed(2),
+                        s.timeouts,  s.connect_errors, s.read_errors, s.errors, s.totalBytes, JSON.stringify(s.responseReceived).replace(/['"]+/g, '')));
     //               console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
     //                    key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
                 }       
                 else
                 {
                     console.log(printf('second %d: %d requests - average time: %d ms, timeouts: %d, responses received: %s',
-                        key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived)));
+                        key, s.requestSent, s.averageTime.toFixed(2), s.timeouts, JSON.stringify(s.responseReceived).replace(/['"]+/g, '')));
                 }
             }
             
